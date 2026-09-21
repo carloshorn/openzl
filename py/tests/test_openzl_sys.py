@@ -491,7 +491,6 @@ class TestOpenzlSys(TestCase):
             np.frombuffer(compressed, dtype=np.uint8)
         ]
         for buffer in buffers:
-            buffer = np.frombuffer(compressed, dtype=np.uint8)
             dctx = ext.DCtx()
             decompressed = dctx.decompress(buffer)
             round_tripped = decompressed[0].content.as_nparray()
