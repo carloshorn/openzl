@@ -478,3 +478,21 @@ class TestOpenzlSys(TestCase):
         del decompressed
 
         self.assertTrue(np.array_equal(data, round_tripped))
+
+    def test_decompress_buffer(self) -> None:
+        data = np.array([42] * 1000, dtype=np.uint32)
+        compressor = ext.Compressor()
+        compressor.set_parameter(ext.CParam.FormatVersion, ext.MAX_FORMAT_VERSION)
+        graph = ext.graphs.Constant()(compressor)
+        compressor.select_starting_graph(graph)
+        compressed = self._round_trip(compressor, [ext.Input(ext.Type.Numeric, data)])
+        buffers = [
+            bytearray(compressed),
+            np.frombuffer(compressed, dtype=np.uint8)
+        ]
+        for buffer in buffers:
+            buffer = np.frombuffer(compressed, dtype=np.uint8)
+            dctx = ext.DCtx()
+            decompressed = dctx.decompress(buffer)
+            round_tripped = decompressed[0].content.as_nparray()
+            self.assertTrue(np.array_equal(data, round_tripped))
