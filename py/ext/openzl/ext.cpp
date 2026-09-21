@@ -1199,10 +1199,19 @@ class PyDCtx : public DCtx,
    public:
     using DCtx::DCtx;
 
-    std::vector<nb::ref<PyOutput>> decompress(const nb::bytes& input)
+    std::vector<nb::ref<PyOutput>> decompress(const nb::object& buffer)
     {
-        auto out = this->DCtx::decompress(
-                { static_cast<const char*>(input.data()), input.size() });
+        Py_buffer view;
+        if (PyObject_GetBuffer(buffer.ptr(), &view, PyBUF_SIMPLE) != 0) {
+            throw nb::type_error("Argument must support the Python buffer protocol!");
+        }
+        const char* input_data = reinterpret_cast<const char*>(view.buf);
+        size_t input_size = view.len;
+
+        auto out = this->DCtx::decompress({ input_data, input_size });
+
+        PyBuffer_Release(&view);
+
         std::vector<nb::ref<PyOutput>> pyOut;
         pyOut.reserve(out.size());
         for (auto& o : out) {
