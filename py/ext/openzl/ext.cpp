@@ -1198,19 +1198,14 @@ class PyDCtx : public DCtx,
                public nb::intrusive_base {
    public:
     using DCtx::DCtx;
+    using PyBufferInput = nb::ndarray<const uint8_t, nb::ndim<1>, nb::c_contig, nb::memview, nb::ro>;
 
-    std::vector<nb::ref<PyOutput>> decompress(const nb::object& buffer)
+    std::vector<nb::ref<PyOutput>> decompress(PyBufferInput buffer)
     {
-        Py_buffer view;
-        if (PyObject_GetBuffer(buffer.ptr(), &view, PyBUF_SIMPLE) != 0) {
-            throw nb::type_error("Argument must support the Python buffer protocol!");
-        }
-        const char* input_data = reinterpret_cast<const char*>(view.buf);
-        size_t input_size = view.len;
+        const char* input_data = reinterpret_cast<const char*>(buffer.data());
+        size_t input_size = buffer.size();
 
         auto out = this->DCtx::decompress({ input_data, input_size });
-
-        PyBuffer_Release(&view);
 
         std::vector<nb::ref<PyOutput>> pyOut;
         pyOut.reserve(out.size());

@@ -2,6 +2,7 @@
 
 
 from typing import List, Tuple
+from collections.abc import Buffer
 from unittest import TestCase
 
 import numpy as np
@@ -486,9 +487,15 @@ class TestOpenzlSys(TestCase):
         graph = ext.graphs.Constant()(compressor)
         compressor.select_starting_graph(graph)
         compressed = self._round_trip(compressor, [ext.Input(ext.Type.Numeric, data)])
+        class MyBuffer(Buffer):
+            def __init__(self, data):
+                self.data = data
+            def __buffer__(self, flag):
+                return self.data.__buffer__(flag)
         buffers = [
             bytearray(compressed),
-            np.frombuffer(compressed, dtype=np.uint8)
+            np.frombuffer(compressed, dtype=np.uint8),
+            MyBuffer(compressed)
         ]
         for buffer in buffers:
             dctx = ext.DCtx()
