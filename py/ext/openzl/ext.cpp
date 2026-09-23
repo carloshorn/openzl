@@ -1255,7 +1255,7 @@ void registerDCtxClass(nb::module_& m)
             .def("set_parameter", &PyDCtx::setParameter)
             .def("get_parameter", &PyDCtx::getParameter)
             .def("reset_parameters", &PyDCtx::resetParameters)
-            .def("decompress", &PyDCtx::decompress)
+            .def("decompress", &PyDCtx::decompress, nb::arg("compressed").noconvert())
             .def("register_custom_decoder", &PyDCtx::registerCustomDecoder);
 }
 

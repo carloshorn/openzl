@@ -2,7 +2,6 @@
 
 
 from typing import List, Tuple
-from collections.abc import Buffer
 from unittest import TestCase
 
 import numpy as np
@@ -487,18 +486,28 @@ class TestOpenzlSys(TestCase):
         graph = ext.graphs.Constant()(compressor)
         compressor.select_starting_graph(graph)
         compressed = self._round_trip(compressor, [ext.Input(ext.Type.Numeric, data)])
-        class MyBuffer(Buffer):
+
+        class MyBuffer:
             def __init__(self, data):
                 self.data = data
+
             def __buffer__(self, flag):
                 return self.data.__buffer__(flag)
+
         buffers = [
             bytearray(compressed),
             np.frombuffer(compressed, dtype=np.uint8),
-            MyBuffer(compressed)
+            MyBuffer(compressed),
         ]
         for buffer in buffers:
             dctx = ext.DCtx()
             decompressed = dctx.decompress(buffer)
             round_tripped = decompressed[0].content.as_nparray()
             self.assertTrue(np.array_equal(data, round_tripped))
+
+    def test_decompress_does_not_convert_arrays(self) -> None:
+        buffer = np.frombuffer(b"Pan-Galactic Gargle Blaster\0", dtype=np.uint16)
+        dctx = ext.DCtx()
+        self.assertRaises(
+            TypeError, "incompatible function arguments", dctx.decompress, buffer
+        )
