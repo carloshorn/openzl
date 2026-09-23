@@ -1,6 +1,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 
 
+import sys
 from typing import List, Tuple
 from unittest import TestCase
 
@@ -499,6 +500,8 @@ class TestOpenzlSys(TestCase):
             np.frombuffer(compressed, dtype=np.uint8),
             MyBuffer(compressed),
         ]
+        if sys.version_info < (3, 12):
+            buffers.pop()
         for buffer in buffers:
             dctx = ext.DCtx()
             decompressed = dctx.decompress(buffer)
